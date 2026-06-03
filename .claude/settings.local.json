@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const c=require\\('@smogon/calc'\\); console.log\\('version exports:', Object.keys\\(c\\).join\\(', '\\)\\)\")",
+      "Bash(node docs/files/champions-adapter.js)",
+      "Bash(npx jest *)"
+    ]
+  }
+}
