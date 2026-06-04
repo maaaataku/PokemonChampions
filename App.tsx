@@ -8,6 +8,7 @@ import { THEMES, type ThemeName } from './src/ui/theme';
 import { initialBoard, type BoardState } from './src/ui/calcModel';
 import DoublesScreen from './src/screens/DoublesScreen';
 import MatchupScreen from './src/screens/MatchupScreen';
+import PresetManager from './src/screens/PresetManager';
 
 type Tab = 'calc' | 'matchup';
 
@@ -18,6 +19,7 @@ export default function App() {
 
   const [board, setBoard] = useState<BoardState>(initialBoard);
   const [tab, setTab] = useState<Tab>('calc');
+  const [manageOpen, setManageOpen] = useState(false);
 
   return (
     <SafeAreaProvider>
@@ -33,10 +35,16 @@ export default function App() {
               ダメ計 <Text style={{ color: t.lo, fontWeight: '700', fontSize: 11 }}>Champions · ダブル</Text>
             </Text>
           </View>
-          <Pressable onPress={() => setThemeName(themeName === 'dark' ? 'light' : 'dark')}
-            style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 10, padding: 8 }}>
-            <Ionicons name={themeName === 'dark' ? 'sunny' : 'moon'} size={17} color={t.hi} />
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Pressable onPress={() => setManageOpen(true)}
+              style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 10, padding: 8 }}>
+              <Ionicons name="albums" size={17} color={t.hi} />
+            </Pressable>
+            <Pressable onPress={() => setThemeName(themeName === 'dark' ? 'light' : 'dark')}
+              style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 10, padding: 8 }}>
+              <Ionicons name={themeName === 'dark' ? 'sunny' : 'moon'} size={17} color={t.hi} />
+            </Pressable>
+          </View>
         </View>
 
         {/* タブ切替 */}
@@ -59,6 +67,9 @@ export default function App() {
         {tab === 'calc'
           ? <DoublesScreen t={t} s={board} setS={setBoard} />
           : <MatchupScreen t={t} s={board} setS={setBoard} />}
+
+        <PresetManager t={t} visible={manageOpen} board={board}
+          onLoad={(b) => setBoard(b)} onClose={() => setManageOpen(false)} />
       </SafeAreaView>
     </SafeAreaProvider>
   );

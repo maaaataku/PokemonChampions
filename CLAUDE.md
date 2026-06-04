@@ -19,10 +19,14 @@ src/
     types/natures/items/typechart  + index(バレル & toChampMon)
   ui/
     theme.ts components.tsx calcModel.ts   盤面状態モデル＆状態→計算
+  storage/
+    presets.ts                              構築プリセットCRUD（StorageAdapter抽象・RN非依存・テスト対象）
+    index.ts                                AsyncStorage実装の隔離点（presetStore を提供）
   screens/
     DoublesScreen.tsx                       計算タブ（試作の移植・実エンジン接続）
     MatchupScreen.tsx                       相性タブ（防御相性・有効打・補完・テラス F-15〜17）
-App.tsx                                     盤面状態とテーマを保持し、計算/相性タブを切替（状態共有）
+    PresetManager.tsx                       構築の保存/読込/削除モーダル（フェーズ2）
+App.tsx                                     盤面状態とテーマを保持し、計算/相性タブを切替（状態共有）＋構築管理
 ```
 
 ## 設計の鉄則（崩すと精度が壊れる）
