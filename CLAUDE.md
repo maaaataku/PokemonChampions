@@ -21,6 +21,7 @@ src/
     theme.ts components.tsx calcModel.ts   盤面状態モデル＆状態→計算
   storage/
     presets.ts                              構築プリセットCRUD（StorageAdapter抽象・RN非依存・テスト対象）
+    share.ts                                共有コード(PC1.<base64url>) encode/decode（検証付き・RN非依存）
     index.ts                                AsyncStorage実装の隔離点（presetStore を提供）
   screens/
     DoublesScreen.tsx                       計算タブ（試作の移植・実エンジン接続）

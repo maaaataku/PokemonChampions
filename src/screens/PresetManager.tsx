@@ -2,11 +2,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 
 import type { Theme } from '../ui/theme';
 import { POKEDEX } from '../data';
 import type { BoardState } from '../ui/calcModel';
 import { presetStore, type SavedPreset } from '../storage';
+import { encodeBoard, decodeBoard } from '../storage/share';
 
 export interface PresetManagerProps {
   t: Theme;
@@ -33,6 +35,10 @@ export default function PresetManager({ t, visible, board, onLoad, onClose }: Pr
   const [list, setList] = useState<SavedPreset[]>([]);
   const [name, setName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importErr, setImportErr] = useState(false);
+  const [shareCode, setShareCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const refresh = useCallback(async () => {
     setList(await presetStore.list());
@@ -56,6 +62,29 @@ export default function PresetManager({ t, visible, board, onLoad, onClose }: Pr
   const onDelete = async (id: string) => {
     await presetStore.remove(id);
     await refresh();
+  };
+
+  const onImport = () => {
+    const b = decodeBoard(importText);
+    if (b) {
+      onLoad(b);
+      setImportText('');
+      setImportErr(false);
+      onClose();
+    } else {
+      setImportErr(true);
+    }
+  };
+
+  const reveal = (b: BoardState) => {
+    setShareCode(encodeBoard(b));
+    setCopied(false);
+  };
+
+  const onCopy = async () => {
+    if (!shareCode) return;
+    await Clipboard.setStringAsync(shareCode);
+    setCopied(true);
   };
 
   return (
@@ -86,8 +115,47 @@ export default function PresetManager({ t, visible, board, onLoad, onClose }: Pr
                 <Text style={{ fontSize: 13, fontWeight: '800', color: t.onAccent }}>保存</Text>
               </Pressable>
             </View>
-            <Text style={{ fontSize: 9.5, color: t.lo, marginTop: 5 }}>{summarize(board)}（同名は上書き）</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
+              <Text style={{ flex: 1, fontSize: 9.5, color: t.lo }} numberOfLines={1}>{summarize(board)}（同名は上書き）</Text>
+              <Pressable onPress={() => reveal(board)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 9, borderWidth: 1, borderColor: t.border }}>
+                <Ionicons name="share-social" size={13} color={t.mid} />
+                <Text style={{ fontSize: 11, fontWeight: '700', color: t.mid }}>現在の盤面を共有</Text>
+              </Pressable>
+            </View>
           </View>
+
+          {/* 共有コードの取込（インポート） */}
+          <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+            <Text style={{ fontSize: 10.5, color: t.lo, fontWeight: '700', marginBottom: 6 }}>共有コードを取込</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.panel2, borderWidth: 1, borderColor: importErr ? t.foe : t.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                <Ionicons name="enter" size={15} color={t.mid} />
+                <TextInput value={importText} onChangeText={(v) => { setImportText(v); setImportErr(false); }} placeholder="PC1.… を貼り付け" placeholderTextColor={t.lo} autoCapitalize="none" autoCorrect={false}
+                  style={{ flex: 1, color: t.hi, fontSize: 13, padding: 0 }} onSubmitEditing={onImport} />
+              </View>
+              <Pressable onPress={onImport} style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12 }}>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: t.hi }}>取込</Text>
+              </Pressable>
+            </View>
+            {importErr && <Text style={{ fontSize: 10, color: t.foe, marginTop: 5 }}>無効な共有コードです（形式違い・破損・非対応のポケモンを含む）。</Text>}
+          </View>
+
+          {/* 共有コード表示 */}
+          {shareCode && (
+            <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: t.panel2, borderRadius: 12, borderWidth: 1, borderColor: t.border, padding: 12 }}>
+              <Text style={{ fontSize: 10.5, color: t.lo, fontWeight: '700', marginBottom: 6 }}>共有コード（コピーして渡す）</Text>
+              <Text selectable style={{ fontSize: 11, color: t.hi, fontFamily: 'monospace' }} numberOfLines={3}>{shareCode}</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                <Pressable onPress={onCopy} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: t.accent, borderRadius: 9, paddingHorizontal: 12, paddingVertical: 7 }}>
+                  <Ionicons name={copied ? 'checkmark' : 'copy'} size={14} color={t.onAccent} />
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: t.onAccent }}>{copied ? 'コピーしました' : 'コピー'}</Text>
+                </Pressable>
+                <Pressable onPress={() => setShareCode(null)} style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 9, paddingHorizontal: 12, paddingVertical: 7 }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: t.mid }}>閉じる</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
 
           {/* 保存済み一覧 */}
           <Text style={{ paddingHorizontal: 16, fontSize: 10.5, color: t.lo, fontWeight: '700' }}>保存済み（{list.length}）</Text>
@@ -104,6 +172,9 @@ export default function PresetManager({ t, visible, board, onLoad, onClose }: Pr
                   </Pressable>
                   <Pressable onPress={() => { onLoad(p.board); onClose(); }} style={{ backgroundColor: t.accent, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 }}>
                     <Text style={{ fontSize: 12, fontWeight: '800', color: t.onAccent }}>読込</Text>
+                  </Pressable>
+                  <Pressable onPress={() => reveal(p.board)} style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 10, padding: 8 }}>
+                    <Ionicons name="share-social" size={15} color={t.mid} />
                   </Pressable>
                   <Pressable onPress={() => onDelete(p.id)} style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 10, padding: 8 }}>
                     <Ionicons name="trash" size={15} color={t.foe} />
