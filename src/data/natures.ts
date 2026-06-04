@@ -70,3 +70,18 @@ export function natureFor(plus: NatureStat | null, minus: NatureStat | null): st
   const found = NATURES.find((n) => n.plus === plus && n.minus === minus);
   return found ? found.en : NEUTRAL_NATURE;
 }
+
+const NEUTRAL_JP = NATURES.find((n) => n.en === NEUTRAL_NATURE)!.jp;
+
+/**
+ * 試作の「対象能力に対する補正値(0.9/1.0/1.1)」から日本語性格名を引く。
+ * ダメージ計算上は対象能力の倍率だけが効くため、もう一方の上下stは任意でよい。
+ */
+export function natureJPForStat(stat: NatureStat, mult: 0.9 | 1.0 | 1.1): string {
+  if (mult === 1.0) return NEUTRAL_JP;
+  const found =
+    mult === 1.1
+      ? NATURES.find((n) => n.plus === stat && n.minus !== stat)
+      : NATURES.find((n) => n.minus === stat && n.plus !== stat);
+  return found ? found.jp : NEUTRAL_JP;
+}

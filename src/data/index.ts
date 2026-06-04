@@ -51,3 +51,5 @@ export function toChampMon(input: MonInput): ChampMon {
     overrides: dex?.overrides,
   };
 }
+export * from './items';
+export * from './typechart';

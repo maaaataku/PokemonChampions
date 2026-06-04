@@ -23,6 +23,8 @@ export interface MoveDef {
   crit?: boolean;
   /** 連続技のヒット数。 */
   hits?: number;
+  /** フリーズドライ等、対みず常時ばつぐんの特例（eff表示用。ダメージはエンジンが処理）。 */
+  freezeDry?: boolean;
 }
 
 /** 試作ロスターの技。キーは日本語名（UI表示キー）。 */
@@ -42,7 +44,7 @@ export const MOVES: Record<string, MoveDef> = {
   かえんほうしゃ: { jp: 'かえんほうしゃ', en: 'Flamethrower', type: 'ほのお', cat: 'spec', power: 90, target: 'single' },
   だいちのちから: { jp: 'だいちのちから', en: 'Earth Power', type: 'じめん', cat: 'spec', power: 90, target: 'single' },
   ハイドロポンプ: { jp: 'ハイドロポンプ', en: 'Hydro Pump', type: 'みず', cat: 'spec', power: 110, target: 'single' },
-  フリーズドライ: { jp: 'フリーズドライ', en: 'Freeze-Dry', type: 'こおり', cat: 'spec', power: 70, target: 'single' },
+  フリーズドライ: { jp: 'フリーズドライ', en: 'Freeze-Dry', type: 'こおり', cat: 'spec', power: 70, target: 'single', freezeDry: true },
 };
 
 /** 範囲技か（対象が複数=エンジンの Doubles で ×0.75 が掛かる）。 */
