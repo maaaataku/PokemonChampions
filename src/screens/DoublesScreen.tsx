@@ -18,7 +18,7 @@ import { KO_COLORS } from '../engine/result';
 import { findSurvival, type SurvivalResult } from '../engine/tuning';
 import {
   computeResults, computeCombo, targetSlots, allyOther,
-  attackParamsFor, speedRows, allMovesDamage,
+  attackParamsFor, speedRows, allMovesDamage, incomingMovesDamage,
   type BoardState, type SlotId, type AllyId, type FoeId, type Mult,
 } from '../ui/calcModel';
 
@@ -40,6 +40,7 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
   const [detail, setDetail] = useState<'atk' | 'def' | null>(null);
   const [survival, setSurvival] = useState<{ slot: SlotId; result: SurvivalResult } | null>(null);
   const [showAllMoves, setShowAllMoves] = useState(false);
+  const [showIncoming, setShowIncoming] = useState(false);
 
   const move = MOVES[s.moveKey];
   const isPhys = move?.cat === 'phys';
@@ -64,6 +65,8 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
     setS((prev) => ({ ...prev, comboMv: { ...prev.comboMv, [ally]: mv } }));
   const setSpe = <K extends keyof BoardState['speProfs'][SlotId]>(slot: SlotId, k: K, v: BoardState['speProfs'][SlotId][K]) =>
     setS((prev) => ({ ...prev, speProfs: { ...prev.speProfs, [slot]: { ...prev.speProfs[slot], [k]: v } } }));
+  const setFoeAtk = <K extends keyof BoardState['foeAtk'][FoeId]>(foe: FoeId, k: K, v: BoardState['foeAtk'][FoeId][K]) =>
+    setS((prev) => ({ ...prev, foeAtk: { ...prev.foeAtk, [foe]: { ...prev.foeAtk[foe], [k]: v } } }));
 
   const pickMon = (jp: string) => {
     if (!sheet) return;
@@ -213,6 +216,46 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
               </Pressable>
             );
           })}
+        </Panel>
+
+        {/* 被ダメ（両方向計算 F-7） */}
+        <Panel t={t} style={{ marginTop: 12 }}>
+          <Pressable onPress={() => setShowIncoming((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+            <Ionicons name="shield" size={15} color={t.foe} />
+            <Text style={{ fontWeight: '800', fontSize: 13, color: t.hi }}>被ダメ</Text>
+            <Text style={{ fontSize: 10.5, color: t.lo }}>{POKEDEX[s.slots[s.focusFoe]].jp} → {atkMon.jp}</Text>
+            <Ionicons name={showIncoming ? 'chevron-up' : 'chevron-down'} size={15} color={t.mid} style={{ marginLeft: 'auto' }} />
+          </Pressable>
+          {showIncoming && (
+            <>
+              {/* 相手の攻撃投資（被ダメの精度のため） */}
+              <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: t.border }}>
+                <Text style={{ fontSize: 10.5, color: t.foe, fontWeight: '700', marginBottom: 4 }}>{POKEDEX[s.slots[s.focusFoe]].jp} の攻撃</Text>
+                <Stepper t={t} label="こうげき/とくこう 能力P" value={s.foeAtk[s.focusFoe].sp} min={0} max={32} step={4} onChange={(v) => setFoeAtk(s.focusFoe, 'sp', v)} />
+                <NatureRow t={t} value={s.foeAtk[s.focusFoe].nature} onChange={(v) => setFoeAtk(s.focusFoe, 'nature', v as Mult)} />
+                <ChoiceRow<AtkItemKey> t={t} label="もちもの" value={s.foeAtk[s.focusFoe].item} opts={ATK_ITEM_LABELS} onChange={(v) => setFoeAtk(s.focusFoe, 'item', v)} />
+              </View>
+              {incomingMovesDamage(s).map(({ moveJP, model }) => {
+                const mv = MOVES[moveJP];
+                const kc = KO_COLORS[model.ko.kind];
+                return (
+                  <View key={moveJP} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderTopWidth: 1, borderTopColor: t.border }}>
+                    <View style={{ width: 6, height: 22, borderRadius: 3, backgroundColor: TYPE_COLORS[mv.type] }} />
+                    <View style={{ flexShrink: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: t.hi }}>{mv.jp}</Text>
+                        {mv.target !== 'single' && <Text style={{ fontSize: 9, color: t.lo }}>※範囲</Text>}
+                        {mv.champAdjusted && <ChampBadge verified={mv.champVerified} />}
+                      </View>
+                      <Text style={{ fontSize: 10.5, color: t.mid }}>{model.min}–{model.max} · {model.minPct.toFixed(0)}–{model.maxPct.toFixed(0)}% · ×{model.eff}</Text>
+                    </View>
+                    <Text style={{ marginLeft: 'auto', fontSize: 15, fontWeight: '800', color: kc }}>{model.ko.label}</Text>
+                  </View>
+                );
+              })}
+              <Text style={{ fontSize: 9.5, color: t.lo, marginTop: 6 }}>※ 被ダメは攻撃役({atkMon.jp})の無振り耐久を基準。範囲技は ×0.75 込み。</Text>
+            </>
+          )}
         </Panel>
 
         {/* 合算KO */}

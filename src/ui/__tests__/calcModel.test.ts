@@ -1,6 +1,7 @@
 // calcModel.test.ts — 盤面の対象決定・範囲・味方巻き込み・合算KO ロジックの回帰テスト。
 import {
-  initialBoard, targetSlots, computeResults, computeCombo, speedRows, allMovesDamage, type BoardState,
+  initialBoard, targetSlots, computeResults, computeCombo, speedRows,
+  allMovesDamage, incomingMovesDamage, type BoardState,
 } from '../calcModel';
 import { POKEDEX } from '../../data';
 
@@ -63,6 +64,24 @@ describe('allMovesDamage（全技ダメ計・F-7）', () => {
     const rows = allMovesDamage(board(), 'allyA', 'foeL');
     expect(rows[0].model.ko.label).toBeTruthy();
     expect(rows[0].model.maxHP).toBeGreaterThan(0);
+  });
+});
+
+describe('incomingMovesDamage（被ダメ・両方向計算 F-7）', () => {
+  it('focus相手の全技を攻撃役へ計算し降順で返す', () => {
+    const s = board(); // focusFoe=foeL(カバルドン) → activeAtk=allyA(ガブリアス)
+    const rows = incomingMovesDamage(s);
+    expect(rows.length).toBe(POKEDEX['カバルドン'].moves.length);
+    for (let i = 1; i < rows.length; i++) {
+      expect(rows[i - 1].model.max).toBeGreaterThanOrEqual(rows[i].model.max);
+    }
+    // 被ダメの分母は攻撃役(ガブリアス)のHP。
+    expect(rows[0].model.maxHP).toBe(incomingMovesDamage(s)[0].model.maxHP);
+  });
+  it('相手の攻撃投資(foeAtk)を上げると被ダメが増える', () => {
+    const low = { ...board(), foeAtk: { foeL: { sp: 0, nature: 1.0 as const, stage: 0, item: 'none' as const, hh: false, intim: false }, foeR: board().foeAtk.foeR } };
+    const high = { ...board(), foeAtk: { foeL: { sp: 32, nature: 1.1 as const, stage: 0, item: 'none' as const, hh: false, intim: false }, foeR: board().foeAtk.foeR } };
+    expect(incomingMovesDamage(high)[0].model.max).toBeGreaterThan(incomingMovesDamage(low)[0].model.max);
   });
 });
 

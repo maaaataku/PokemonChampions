@@ -66,6 +66,8 @@ export interface BoardState {
   allyTailwind: boolean;
   foeTailwind: boolean;
   trickRoom: boolean;
+  /** 相手の攻撃プロフィール（両方向計算の「被ダメ」用。F-7）。 */
+  foeAtk: Record<FoeId, AtkProfile>;
 }
 
 export const allyOther = (a: AllyId): AllyId => (a === 'allyA' ? 'allyB' : 'allyA');
@@ -93,6 +95,7 @@ export function initialBoard(): BoardState {
     allyTailwind: false,
     foeTailwind: false,
     trickRoom: false,
+    foeAtk: { foeL: atk(), foeR: atk() },
   };
 }
 
@@ -104,21 +107,24 @@ export function targetSlots(s: BoardState): SlotId[] {
   return ['foeL', 'foeR', allyOther(s.activeAtk)];
 }
 
-/** 攻撃側スロット＋技 → MonInput。攻撃能力は技分類で atk/spa を切替。 */
-export function atkInput(s: BoardState, ally: AllyId, moveJP: string): MonInput {
-  const prof = s.atkProfs[ally];
+/** 種族・攻撃プロフィール・テラス・技 → MonInput（攻撃側。どのスロットにも使える汎用）。 */
+function buildAtkInput(speciesJP: string, prof: AtkProfile, tera: TeraState, moveJP: string): MonInput {
   const move = MOVES[moveJP];
   const isPhys = move?.cat === 'phys';
   const stat = isPhys ? 'atk' : 'spa';
-  const tera = s.tera[ally];
   return {
-    speciesJP: s.slots[ally],
+    speciesJP,
     pts: { [stat]: prof.sp },
     natureJP: natureJPForStat(stat, prof.nature),
     item: atkItemEN(prof.item, isPhys),
     teraJP: tera.on ? tera.type : null,
     boosts: prof.stage ? { [stat]: prof.stage } : undefined,
   };
+}
+
+/** 味方スロット＋技 → MonInput。 */
+export function atkInput(s: BoardState, ally: AllyId, moveJP: string): MonInput {
+  return buildAtkInput(s.slots[ally], s.atkProfs[ally], s.tera[ally], moveJP);
 }
 
 /** 防御側スロット → MonInput。防御能力は技分類で def/spd を切替。 */
@@ -141,23 +147,27 @@ export function attackParamsFor(s: BoardState, slot: SlotId): CalcParams {
   return paramsFor(s, s.activeAtk, s.moveKey, slot);
 }
 
-function paramsFor(s: BoardState, ally: AllyId, moveJP: string, slot: SlotId): CalcParams {
+/** 任意の攻撃スロット(味方/相手)→防御スロットの CalcParams。両方向計算で相手→味方も組める。 */
+function paramsForAtk(s: BoardState, atkSlot: SlotId, atkProf: AtkProfile, moveJP: string, defSlot: SlotId): CalcParams {
   const move = MOVES[moveJP];
   const isPhys = move?.cat === 'phys';
-  const atkP = s.atkProfs[ally];
-  const defP = s.defProfs[slot];
+  const defP = s.defProfs[defSlot];
   return {
-    attacker: atkInput(s, ally, moveJP),
-    defender: defInput(s, slot, isPhys),
+    attacker: buildAtkInput(s.slots[atkSlot], atkProf, s.tera[atkSlot], moveJP),
+    defender: defInput(s, defSlot, isPhys),
     moveJP,
     doubles: true,
     weather: s.weather,
     terrain: s.terrain,
-    helpingHand: atkP.hh,
-    intimidate: atkP.intim,
+    helpingHand: atkProf.hh,
+    intimidate: atkProf.intim,
     friendGuard: defP.fg,
     screen: defP.screen,
   };
+}
+
+function paramsFor(s: BoardState, ally: AllyId, moveJP: string, slot: SlotId): CalcParams {
+  return paramsForAtk(s, ally, s.atkProfs[ally], moveJP, slot);
 }
 
 export interface MoveDamage {
@@ -172,6 +182,22 @@ export interface MoveDamage {
 export function allMovesDamage(s: BoardState, ally: AllyId, target: SlotId): MoveDamage[] {
   const moves = POKEDEX[s.slots[ally]]?.moves ?? [];
   const rows = moves.map((mv) => ({ moveJP: mv, model: calcDamage(paramsFor(s, ally, mv, target)) }));
+  rows.sort((a, b) => b.model.max - a.model.max || b.model.min - a.model.min);
+  return rows;
+}
+
+/**
+ * 両方向計算の「被ダメ」（F-7）：focus 中の相手が攻撃役（味方）へ放つ全技を計算し降順で返す。
+ * 相手の攻撃投資は foeAtk プロフィール、味方の耐久は defProfs[activeAtk] を用いる（左右対称・実値）。
+ */
+export function incomingMovesDamage(s: BoardState): MoveDamage[] {
+  const foe = s.focusFoe;
+  const ally = s.activeAtk;
+  const moves = POKEDEX[s.slots[foe]]?.moves ?? [];
+  const rows = moves.map((mv) => ({
+    moveJP: mv,
+    model: calcDamage(paramsForAtk(s, foe, s.foeAtk[foe], mv, ally)),
+  }));
   rows.sort((a, b) => b.model.max - a.model.max || b.model.min - a.model.min);
   return rows;
 }
