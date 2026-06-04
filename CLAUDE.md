@@ -19,6 +19,7 @@ src/
     types/natures/items/typechart  + index(バレル & toChampMon)
   ui/
     theme.ts components.tsx calcModel.ts   盤面状態モデル＆状態→計算
+  data/showdown.ts                          Showdown/PokePaste 取込・書き出し（EN→JP逆引き・EV↔能力P）
   storage/
     presets.ts                              構築プリセットCRUD（StorageAdapter抽象・RN非依存・テスト対象）
     share.ts                                共有コード(PC1.<base64url>) encode/decode（検証付き・RN非依存）

@@ -9,6 +9,7 @@ import { POKEDEX } from '../data';
 import type { BoardState } from '../ui/calcModel';
 import { presetStore, type SavedPreset } from '../storage';
 import { encodeBoard, decodeBoard } from '../storage/share';
+import { parseShowdown, importTeamToBoard, boardAlliesToShowdown } from '../data';
 
 export interface PresetManagerProps {
   t: Theme;
@@ -38,7 +39,10 @@ export default function PresetManager({ t, visible, board, onLoad, onClose }: Pr
   const [importText, setImportText] = useState('');
   const [importErr, setImportErr] = useState(false);
   const [shareCode, setShareCode] = useState<string | null>(null);
+  const [shareLabel, setShareLabel] = useState('共有コード（コピーして渡す）');
   const [copied, setCopied] = useState(false);
+  const [sdText, setSdText] = useState('');
+  const [sdMsg, setSdMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
   const refresh = useCallback(async () => {
     setList(await presetStore.list());
@@ -77,8 +81,33 @@ export default function PresetManager({ t, visible, board, onLoad, onClose }: Pr
   };
 
   const reveal = (b: BoardState) => {
+    setShareLabel('共有コード（コピーして渡す）');
     setShareCode(encodeBoard(b));
     setCopied(false);
+  };
+
+  const revealShowdown = () => {
+    setShareLabel('Showdown / PokePaste（コピーして他ツールへ）');
+    setShareCode(boardAlliesToShowdown(board));
+    setCopied(false);
+  };
+
+  const onImportShowdown = () => {
+    const sets = parseShowdown(sdText);
+    if (sets.length === 0) {
+      setSdMsg({ ok: false, text: 'チームを認識できませんでした。Showdown/PokePaste形式を貼り付けてください。' });
+      return;
+    }
+    const res = importTeamToBoard(board, sets);
+    if (res.applied.length === 0) {
+      setSdMsg({ ok: false, text: res.warnings[0] ?? '取り込めるポケモンがありませんでした。' });
+      return;
+    }
+    onLoad(res.board);
+    const names = res.applied.map((a) => a.name).join('・');
+    setSdMsg({ ok: true, text: `${res.applied.length}体を反映: ${names}${res.warnings.length ? `（注意 ${res.warnings.length}件）` : ''}` });
+    setSdText('');
+    onClose();
   };
 
   const onCopy = async () => {
@@ -140,10 +169,33 @@ export default function PresetManager({ t, visible, board, onLoad, onClose }: Pr
             {importErr && <Text style={{ fontSize: 10, color: t.foe, marginTop: 5 }}>無効な共有コードです（形式違い・破損・非対応のポケモンを含む）。</Text>}
           </View>
 
+          {/* Showdown / PokePaste */}
+          <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+              <Text style={{ flex: 1, fontSize: 10.5, color: t.lo, fontWeight: '700' }}>Showdown / PokePaste</Text>
+              <Pressable onPress={revealShowdown} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 9, borderWidth: 1, borderColor: t.border }}>
+                <Ionicons name="download" size={13} color={t.mid} />
+                <Text style={{ fontSize: 11, fontWeight: '700', color: t.mid }}>味方を書き出し</Text>
+              </Pressable>
+            </View>
+            <View style={{ backgroundColor: t.panel2, borderWidth: 1, borderColor: sdMsg && !sdMsg.ok ? t.foe : t.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 }}>
+              <TextInput value={sdText} onChangeText={(v) => { setSdText(v); setSdMsg(null); }} placeholder={'Showdown/PokePasteのチームを貼り付け\n（先頭4体を 味方A/B・相手L/R に反映）'} placeholderTextColor={t.lo}
+                multiline autoCapitalize="none" autoCorrect={false}
+                style={{ color: t.hi, fontSize: 12, padding: 0, minHeight: 60, textAlignVertical: 'top' }} />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+              <Pressable onPress={onImportShowdown} style={{ backgroundColor: t.accent, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 }}>
+                <Text style={{ fontSize: 12.5, fontWeight: '800', color: t.onAccent }}>チームを取込</Text>
+              </Pressable>
+              {sdMsg && <Text style={{ flex: 1, fontSize: 10, color: sdMsg.ok ? t.mid : t.foe }} numberOfLines={2}>{sdMsg.text}</Text>}
+            </View>
+            <Text style={{ fontSize: 9, color: t.lo, marginTop: 5 }}>※ 能力値はChampionsの能力P制に近似（EV→P換算）。技構成はロスター定義を使用。</Text>
+          </View>
+
           {/* 共有コード表示 */}
           {shareCode && (
             <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: t.panel2, borderRadius: 12, borderWidth: 1, borderColor: t.border, padding: 12 }}>
-              <Text style={{ fontSize: 10.5, color: t.lo, fontWeight: '700', marginBottom: 6 }}>共有コード（コピーして渡す）</Text>
+              <Text style={{ fontSize: 10.5, color: t.lo, fontWeight: '700', marginBottom: 6 }}>{shareLabel}</Text>
               <Text selectable style={{ fontSize: 11, color: t.hi, fontFamily: 'monospace' }} numberOfLines={3}>{shareCode}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                 <Pressable onPress={onCopy} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: t.accent, borderRadius: 9, paddingHorizontal: 12, paddingVertical: 7 }}>
