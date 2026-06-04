@@ -160,6 +160,22 @@ function paramsFor(s: BoardState, ally: AllyId, moveJP: string, slot: SlotId): C
   };
 }
 
+export interface MoveDamage {
+  moveJP: string;
+  model: DamageModel;
+}
+
+/**
+ * 全技ダメ計（F-7）：指定の攻撃役が覚える全技を target へ計算し、最大ダメージ降順で返す。
+ * 範囲技はダブルの ×0.75 が乗った実値（現盤面の条件で比較できる）。
+ */
+export function allMovesDamage(s: BoardState, ally: AllyId, target: SlotId): MoveDamage[] {
+  const moves = POKEDEX[s.slots[ally]]?.moves ?? [];
+  const rows = moves.map((mv) => ({ moveJP: mv, model: calcDamage(paramsFor(s, ally, mv, target)) }));
+  rows.sort((a, b) => b.model.max - a.model.max || b.model.min - a.model.min);
+  return rows;
+}
+
 export interface SlotResult extends DamageModel {
   slot: SlotId;
   isAlly: boolean;

@@ -18,7 +18,7 @@ import { KO_COLORS } from '../engine/result';
 import { findSurvival, type SurvivalResult } from '../engine/tuning';
 import {
   computeResults, computeCombo, targetSlots, allyOther,
-  attackParamsFor, speedRows,
+  attackParamsFor, speedRows, allMovesDamage,
   type BoardState, type SlotId, type AllyId, type FoeId, type Mult,
 } from '../ui/calcModel';
 
@@ -39,6 +39,7 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
   const [q, setQ] = useState('');
   const [detail, setDetail] = useState<'atk' | 'def' | null>(null);
   const [survival, setSurvival] = useState<{ slot: SlotId; result: SurvivalResult } | null>(null);
+  const [showAllMoves, setShowAllMoves] = useState(false);
 
   const move = MOVES[s.moveKey];
   const isPhys = move?.cat === 'phys';
@@ -183,6 +184,36 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
             </View>
           )}
         </View>
+
+        {/* 全技ダメ計（F-7） */}
+        <Panel t={t} style={{ marginTop: 12 }}>
+          <Pressable onPress={() => setShowAllMoves((v) => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+            <Ionicons name="list" size={15} color={t.accent} />
+            <Text style={{ fontWeight: '800', fontSize: 13, color: t.hi }}>全技ダメ計</Text>
+            <Text style={{ fontSize: 10.5, color: t.lo }}>{atkMon.jp} → {POKEDEX[s.slots[primarySlot]].jp}</Text>
+            <Ionicons name={showAllMoves ? 'chevron-up' : 'chevron-down'} size={15} color={t.mid} style={{ marginLeft: 'auto' }} />
+          </Pressable>
+          {showAllMoves && allMovesDamage(s, s.activeAtk, primarySlot).map(({ moveJP, model }) => {
+            const mv = MOVES[moveJP];
+            const kc = KO_COLORS[model.ko.kind];
+            const on = moveJP === s.moveKey;
+            return (
+              <Pressable key={moveJP} onPress={() => patch({ moveKey: moveJP })}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderTopWidth: 1, borderTopColor: t.border }}>
+                <View style={{ width: 6, height: 22, borderRadius: 3, backgroundColor: TYPE_COLORS[mv.type] }} />
+                <View style={{ flexShrink: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '800', color: on ? t.accent : t.hi }}>{mv.jp}</Text>
+                    {mv.target !== 'single' && <Text style={{ fontSize: 9, color: t.lo }}>※範囲</Text>}
+                    {mv.champAdjusted && <ChampBadge verified={mv.champVerified} />}
+                  </View>
+                  <Text style={{ fontSize: 10.5, color: t.mid }}>{model.min}–{model.max} · {model.minPct.toFixed(0)}–{model.maxPct.toFixed(0)}% · ×{model.eff}</Text>
+                </View>
+                <Text style={{ marginLeft: 'auto', fontSize: 15, fontWeight: '800', color: kc }}>{model.ko.label}</Text>
+              </Pressable>
+            );
+          })}
+        </Panel>
 
         {/* 合算KO */}
         <Panel t={t} style={{ marginTop: 14 }}>

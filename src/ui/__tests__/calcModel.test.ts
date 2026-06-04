@@ -1,7 +1,8 @@
 // calcModel.test.ts — 盤面の対象決定・範囲・味方巻き込み・合算KO ロジックの回帰テスト。
 import {
-  initialBoard, targetSlots, computeResults, computeCombo, speedRows, type BoardState,
+  initialBoard, targetSlots, computeResults, computeCombo, speedRows, allMovesDamage, type BoardState,
 } from '../calcModel';
+import { POKEDEX } from '../../data';
 
 function board(over: Partial<BoardState> = {}): BoardState {
   return { ...initialBoard(), ...over };
@@ -46,6 +47,22 @@ describe('computeCombo（合算KO）', () => {
     const c = computeCombo(s);
     expect(c.parts.length).toBe(0);
     expect(c.verdict).toBe('none');
+  });
+});
+
+describe('allMovesDamage（全技ダメ計・F-7）', () => {
+  it('攻撃役の全技を返し、最大ダメージ降順で並ぶ', () => {
+    const s = board(); // activeAtk=allyA(ガブリアス), focusFoe=foeL(カバルドン)
+    const rows = allMovesDamage(s, 'allyA', 'foeL');
+    expect(rows.length).toBe(POKEDEX['ガブリアス'].moves.length);
+    for (let i = 1; i < rows.length; i++) {
+      expect(rows[i - 1].model.max).toBeGreaterThanOrEqual(rows[i].model.max);
+    }
+  });
+  it('各行に確定数モデルが付く', () => {
+    const rows = allMovesDamage(board(), 'allyA', 'foeL');
+    expect(rows[0].model.ko.label).toBeTruthy();
+    expect(rows[0].model.maxHP).toBeGreaterThan(0);
   });
 });
 
