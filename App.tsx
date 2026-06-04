@@ -9,10 +9,19 @@ import { initialBoard, type BoardState } from './src/ui/calcModel';
 import DoublesScreen from './src/screens/DoublesScreen';
 import MatchupScreen from './src/screens/MatchupScreen';
 import PresetManager from './src/screens/PresetManager';
+import ErrorBoundary from './src/ui/ErrorBoundary';
 
 type Tab = 'calc' | 'matchup';
 
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppInner />
+    </ErrorBoundary>
+  );
+}
+
+function AppInner() {
   const scheme = useColorScheme();
   const [themeName, setThemeName] = useState<ThemeName>(scheme === 'light' ? 'light' : 'dark');
   const t = THEMES[themeName];
@@ -24,7 +33,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style={themeName === 'dark' ? 'light' : 'dark'} />
-      <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center' }}>
+       {/* モバイルは全幅、広い画面では中央480幅に制限（実戦コンパニオンの読みやすさ） */}
+       <View style={{ flex: 1, width: '100%', maxWidth: 480 }}>
         {/* ヘッダー（タブ共有） */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 8, paddingBottom: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -67,6 +78,7 @@ export default function App() {
         {tab === 'calc'
           ? <DoublesScreen t={t} s={board} setS={setBoard} />
           : <MatchupScreen t={t} s={board} setS={setBoard} />}
+       </View>
 
         <PresetManager t={t} visible={manageOpen} board={board}
           onLoad={(b) => setBoard(b)} onClose={() => setManageOpen(false)} />

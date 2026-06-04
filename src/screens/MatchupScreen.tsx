@@ -34,7 +34,7 @@ export default function MatchupScreen({ t, s, setS }: MatchupScreenProps) {
   const allyShared = sharedWeaknesses(defTypesOf(s, 'allyA'), defTypesOf(s, 'allyB'));
 
   return (
-    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 48, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
+    <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 48 }}>
       {/* 防御相性（テラス反映 F-17） */}
       <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 2 }}>
         <Text style={{ fontSize: 11, color: t.foe, fontWeight: '800', letterSpacing: 1 }}>あいて の防御相性</Text>

@@ -85,7 +85,7 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
 
   return (
     <>
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 48, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 48 }}>
         {/* 2v2 盤面 */}
         <Panel t={t} style={{ marginTop: 4 }}>
           <Text style={{ fontSize: 10, color: t.foe, fontWeight: '800', letterSpacing: 1, marginBottom: 6 }}>あいて</Text>
