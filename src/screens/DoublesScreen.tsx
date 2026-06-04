@@ -1,12 +1,11 @@
 // DoublesScreen.tsx — ダブル主軸の計算画面（試作 DoublesCalcWireframe を RN 移植・実エンジン接続）。
 import React, { useMemo, useState } from 'react';
 import {
-  View, Text, Pressable, ScrollView, TextInput, Modal, useColorScheme,
+  View, Text, Pressable, ScrollView, TextInput, Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { THEMES, type ThemeName } from '../ui/theme';
+import { THEMES, type Theme } from '../ui/theme';
 import {
   TypePill, SegButton, ToggleChip, Stepper, NatureRow, ChoiceRow,
   HPBar, Expander, TeraChip, TeraTypeRow,
@@ -18,7 +17,7 @@ import {
 import { KO_COLORS } from '../engine/result';
 import { findSurvival, type SurvivalResult } from '../engine/tuning';
 import {
-  initialBoard, computeResults, computeCombo, targetSlots, allyOther,
+  computeResults, computeCombo, targetSlots, allyOther,
   attackParamsFor, speedRows,
   type BoardState, type SlotId, type AllyId, type FoeId, type Mult,
 } from '../ui/calcModel';
@@ -29,12 +28,13 @@ const TERA_TYPES: TypeJP[] = [
   'かくとう', 'どく', 'エスパー', 'むし', 'いわ', 'ノーマル',
 ];
 
-export default function DoublesScreen() {
-  const scheme = useColorScheme();
-  const [themeName, setThemeName] = useState<ThemeName>(scheme === 'light' ? 'light' : 'dark');
-  const t = THEMES[themeName];
+export interface DoublesScreenProps {
+  t: Theme;
+  s: BoardState;
+  setS: React.Dispatch<React.SetStateAction<BoardState>>;
+}
 
-  const [s, setS] = useState<BoardState>(initialBoard);
+export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
   const [sheet, setSheet] = useState<SlotId | null>(null);
   const [q, setQ] = useState('');
   const [detail, setDetail] = useState<'atk' | 'def' | null>(null);
@@ -80,24 +80,8 @@ export default function DoublesScreen() {
   const atkMon = POKEDEX[s.slots[s.activeAtk]];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+    <>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 48, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
-        {/* ヘッダー */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, paddingTop: 8, paddingBottom: 6 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ width: 26, height: 26, borderRadius: 7, backgroundColor: t.accent, alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="flash" size={16} color={t.bg} />
-            </View>
-            <Text style={{ fontWeight: '900', fontSize: 15, color: t.hi }}>
-              ダメ計 <Text style={{ color: t.lo, fontWeight: '700', fontSize: 11 }}>Champions · ダブル</Text>
-            </Text>
-          </View>
-          <Pressable onPress={() => setThemeName(themeName === 'dark' ? 'light' : 'dark')}
-            style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 10, padding: 8 }}>
-            <Ionicons name={themeName === 'dark' ? 'sunny' : 'moon'} size={17} color={t.hi} />
-          </Pressable>
-        </View>
-
         {/* 2v2 盤面 */}
         <Panel t={t} style={{ marginTop: 4 }}>
           <Text style={{ fontSize: 10, color: t.foe, fontWeight: '800', letterSpacing: 1, marginBottom: 6 }}>あいて</Text>
@@ -384,7 +368,7 @@ export default function DoublesScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </SafeAreaView>
+    </>
   );
 }
 

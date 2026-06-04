@@ -36,6 +36,9 @@ export const TYPE_EN_TO_JP = Object.fromEntries(
   Object.entries(TYPE_JP_TO_EN).map(([jp, en]) => [en, jp]),
 ) as Record<TypeName, TypeJP>;
 
+/** 全18タイプ（相性表の列順）。 */
+export const ALL_TYPES: TypeJP[] = Object.keys(TYPE_JP_TO_EN) as TypeJP[];
+
 /** UI 配色（試作 DoublesCalcWireframe.jsx と一致）。 */
 export const TYPE_COLORS: Record<TypeJP, string> = {
   ノーマル: '#9099a1', ほのお: '#ff6b3d', みず: '#3d9bff', でんき: '#f7cf3a',
