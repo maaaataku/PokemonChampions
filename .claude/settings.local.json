@@ -11,7 +11,9 @@
       "Bash(pkill -f \"expo start --web\")",
       "mcp__Claude_Preview__preview_start",
       "Bash(git add *)",
-      "Bash(git -c user.name=dev -c user.email=maaaataku108@gmail.com commit -q -m ' *)"
+      "Bash(git -c user.name=dev -c user.email=maaaataku108@gmail.com commit -q -m ' *)",
+      "Bash(node -e ' *)",
+      "Bash(echo \"tsc exit: $?\")"
     ]
   }
 }

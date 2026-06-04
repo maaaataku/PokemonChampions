@@ -13,7 +13,9 @@ src/
     result.ts              Result → 確定数モデル(analyze)。range()/kochance()を使用
     service.ts             日本語入力→計算→DamageModel。ダブル補正をField/Sideへマップ
   data/                   データ層（JP↔EN・差分override枠）
-    types/natures/moves/pokedex/items/typechart  + index(バレル & toChampMon)
+    roster.ts              ★入力データ: 種族/技の JP↔EN ＋ 技構成 だけを手で定義
+    pokedex.ts moves.ts    roster + エンジンから種族値/タイプ/威力/分類/対象/hits を自動構築
+    types/natures/items/typechart  + index(バレル & toChampMon)
   ui/
     theme.ts components.tsx calcModel.ts   盤面状態モデル＆状態→計算
   screens/DoublesScreen.tsx                 ダブル計算画面（試作の移植・実エンジン接続）
@@ -28,6 +30,9 @@ src/
 - **ダブル補正は手動倍率にしない。** 範囲×0.75・壁・てだすけ・フレンドガード・天候/フィールド・
   いかくは `service.ts` で Field/Side/boosts に渡し、エンジンに計算させる（自作より正確）。
 - エンジンは**英語名**。UIは日本語。JP↔EN変換は `data/` で解決する。
+- **ロスター/技の追加は `roster.ts` に1行足すだけ**（JP↔EN＋技構成）。種族値・タイプ・威力・
+  分類・対象・ヒット数はエンジンが解決し、`pokedex.ts`/`moves.ts` がモジュール読込時に構築する。
+  無効なEN名は構築時に例外を投げる（`roster.test.ts` が全件の解決と実計算を検証）。
 - Champions固有差分（技威力調整・内定ロスター・メガ・ゼンブイリング等）は
   `overrides`（種族）/ `moveOpts.overrides`（技）の枠で上書きする想定（差分層は今後整備）。
 
