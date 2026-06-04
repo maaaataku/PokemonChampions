@@ -102,6 +102,7 @@ export function applyMoveOverride(base: MoveDef, ov?: MoveOverride): MoveDef {
     target: ov.target ?? base.target,
     engineOverride: toEngineMoveOverride(ov),
     champAdjusted: true,
+    champVerified: ov.verified ?? false,
   };
 }
 
@@ -114,6 +115,7 @@ export function applySpeciesOverride(base: SpeciesDef, ov?: SpeciesOverride): Sp
     types: ov.types ?? base.types,
     overrides: toEngineSpeciesOverride(ov),
     champAdjusted: true,
+    champVerified: ov.verified ?? false,
   };
 }
 

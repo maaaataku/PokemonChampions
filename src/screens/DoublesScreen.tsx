@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { THEMES, type Theme } from '../ui/theme';
 import {
   TypePill, SegButton, ToggleChip, Stepper, NatureRow, ChoiceRow,
-  HPBar, Expander, TeraChip, TeraTypeRow,
+  HPBar, Expander, TeraChip, TeraTypeRow, ChampBadge,
 } from '../ui/components';
 import {
   POKEDEX, MOVES, searchSpecies, TYPE_COLORS,
@@ -116,6 +116,7 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
                   <View style={{ backgroundColor: TYPE_COLORS[move.type], paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
                     <Text style={{ fontSize: 10.5, fontWeight: '800', color: '#0a0e16' }}>{move.jp}</Text>
                   </View>
+                  {move?.champAdjusted && <ChampBadge verified={move.champVerified} />}
                   {isSpread && <View style={{ borderWidth: 1, borderColor: t.border, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 }}>
                     <Text style={{ fontSize: 10, color: t.lo }}>範囲 ×0.75</Text></View>}
                   <Text style={{ fontSize: 11, color: t.mid, fontWeight: '700' }}>
@@ -167,6 +168,7 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
                 }}>
                   <Text style={{ fontSize: 12.5, fontWeight: '700', color: on ? TYPE_COLORS[mv.type] : t.mid }}>{mv.jp}</Text>
                   {mv.target !== 'single' && <Text style={{ fontSize: 9, color: on ? TYPE_COLORS[mv.type] : t.mid }}>※範囲</Text>}
+                  {mv.champAdjusted && <ChampBadge verified={mv.champVerified} />}
                 </Pressable>
               );
             })}
@@ -333,7 +335,8 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
         </Panel>
 
         <Text style={{ textAlign: 'center', color: t.lo, fontSize: 10, marginTop: 18, paddingHorizontal: 24 }}>
-          実エンジン(@smogon/calc)接続 · Lv50/IV31固定/能力ポイント制 · 範囲・合算KO・ダブル補正適用
+          実エンジン(@smogon/calc)接続 · Lv50/IV31固定/能力ポイント制 · 範囲・合算KO・ダブル補正適用{'\n'}
+          Ch = Champions調整値（Ch? は実機未照合の暫定値）
         </Text>
       </ScrollView>
 
@@ -359,6 +362,7 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
                 <Pressable key={p.jp} onPress={() => pickMon(p.jp)}
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 11, borderRadius: 12 }}>
                   <Text style={{ fontWeight: '700', fontSize: 14, color: t.hi }}>{p.jp}</Text>
+                  {p.champAdjusted && <ChampBadge verified={p.champVerified} />}
                   <View style={{ flexDirection: 'row', gap: 5, marginLeft: 'auto' }}>
                     {p.types.map((ty) => <TypePill key={ty} ty={ty} />)}
                   </View>
@@ -417,8 +421,9 @@ function EffPill({ eff }: { eff: number }) {
   );
 }
 
+type MonLite = { jp: string; types: TypeJP[]; champAdjusted?: boolean; champVerified?: boolean };
 type FoeSlotProps = {
-  t: typeof THEMES.dark; mon: { jp: string; types: TypeJP[] }; tera: { on: boolean; type: TypeJP };
+  t: typeof THEMES.dark; mon: MonLite; tera: { on: boolean; type: TypeJP };
   focused: boolean; inTarget: boolean; res?: { ko: { kind: keyof typeof KO_COLORS; label: string }; minPct: number; maxPct: number };
   onMon: () => void; onFocus: () => void;
 };
@@ -431,6 +436,7 @@ function FoeSlot({ t, mon, tera, focused, inTarget, res, onMon, onFocus }: FoeSl
     }}>
       <Pressable onPress={onMon} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
         <Text style={{ fontWeight: '800', fontSize: 13.5, color: t.hi }}>{mon.jp}</Text>
+        {mon.champAdjusted && <ChampBadge verified={mon.champVerified} />}
         <Ionicons name="chevron-down" size={13} color={t.mid} style={{ marginLeft: 'auto' }} />
       </Pressable>
       <View style={{ flexDirection: 'row', gap: 4, marginTop: 4 }}>
@@ -446,7 +452,7 @@ function FoeSlot({ t, mon, tera, focused, inTarget, res, onMon, onFocus }: FoeSl
 }
 
 type AllySlotProps = {
-  t: typeof THEMES.dark; mon: { jp: string; types: TypeJP[] }; tera: { on: boolean; type: TypeJP };
+  t: typeof THEMES.dark; mon: MonLite; tera: { on: boolean; type: TypeJP };
   active: boolean; hitByAlly: boolean; res?: { ko: { kind: keyof typeof KO_COLORS; label: string }; maxPct: number };
   onMon: () => void; onActivate: () => void;
 };
@@ -460,6 +466,7 @@ function AllySlot({ t, mon, tera, active, hitByAlly, res, onMon, onActivate }: A
         {active && <View style={{ backgroundColor: t.accent, borderRadius: 5, paddingHorizontal: 5, paddingVertical: 1 }}>
           <Text style={{ fontSize: 8.5, fontWeight: '800', color: t.onAccent }}>攻撃</Text></View>}
         <Text style={{ fontWeight: '800', fontSize: 13.5, color: t.hi }}>{mon.jp}</Text>
+        {mon.champAdjusted && <ChampBadge verified={mon.champVerified} />}
         <Pressable onPress={onMon} style={{ marginLeft: 'auto' }}><Ionicons name="chevron-down" size={13} color={t.mid} /></Pressable>
       </View>
       <View style={{ flexDirection: 'row', gap: 4, marginTop: 4 }}>
@@ -481,11 +488,12 @@ function MiniChip({ t, on, label, onPress }: { t: typeof THEMES.dark; on: boolea
     </Pressable>
   );
 }
-function MiniMove({ t, mv, on, onPress }: { t: typeof THEMES.dark; mv: { jp: string; type: TypeJP; target: string }; on: boolean; onPress: () => void }) {
+function MiniMove({ t, mv, on, onPress }: { t: typeof THEMES.dark; mv: { jp: string; type: TypeJP; target: string; champAdjusted?: boolean; champVerified?: boolean }; on: boolean; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 9, borderWidth: 1, borderColor: on ? TYPE_COLORS[mv.type] : t.border, backgroundColor: on ? TYPE_COLORS[mv.type] + '26' : 'transparent' }}>
       <Text style={{ fontSize: 11, fontWeight: '700', color: on ? TYPE_COLORS[mv.type] : t.mid }}>{mv.jp}</Text>
       {mv.target !== 'single' && <Text style={{ fontSize: 8, color: on ? TYPE_COLORS[mv.type] : t.mid }}>※範囲</Text>}
+      {mv.champAdjusted && <ChampBadge verified={mv.champVerified} />}
     </Pressable>
   );
 }

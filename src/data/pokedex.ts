@@ -21,6 +21,8 @@ export interface SpeciesDef {
   overrides?: State.Pokemon['overrides'];
   /** Champions差分が適用されているか（UIバッジ用）。 */
   champAdjusted?: boolean;
+  /** その差分が実機照合済みか（false=暫定値。UIバッジの色分け用）。 */
+  champVerified?: boolean;
 }
 
 function buildSpecies(jp: string, en: string, moves: string[]): SpeciesDef {

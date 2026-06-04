@@ -31,7 +31,10 @@ describe('apply 関数（純粋）', () => {
     const out = applyMoveOverride(MOVES['じしん'], { basePower: 120, verified: false });
     expect(out.power).toBe(120);
     expect(out.champAdjusted).toBe(true);
+    expect(out.champVerified).toBe(false); // 暫定値（UIは Ch? バッジ）
     expect(out.engineOverride).toEqual({ basePower: 120 });
+    // verified:true は Ch バッジ
+    expect(applyMoveOverride(MOVES['じしん'], { basePower: 120, verified: true }).champVerified).toBe(true);
   });
   it('種族差分は表示種族値とエンジンoverridesの両方を更新', () => {
     const out = applySpeciesOverride(POKEDEX['カバルドン'], { baseStats: { def: 100 } });

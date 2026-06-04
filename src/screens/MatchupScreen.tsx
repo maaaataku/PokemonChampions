@@ -4,7 +4,7 @@ import { View, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import type { Theme } from '../ui/theme';
-import { TypePill, TeraChip, TeraTypeRow } from '../ui/components';
+import { TypePill, TeraChip, TeraTypeRow, ChampBadge } from '../ui/components';
 import {
   POKEDEX, ALL_TYPES, TYPE_COLORS,
   summarizeDefense, bestOffense, sharedWeaknesses,
@@ -128,6 +128,7 @@ function DefenseCard({ t, s, slot, accent, setTera }: {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <View style={{ width: 4, height: 28, borderRadius: 3, backgroundColor: accent }} />
         <Text style={{ fontSize: 15, fontWeight: '800', color: t.hi }}>{POKEDEX[s.slots[slot]].jp}</Text>
+        {POKEDEX[s.slots[slot]].champAdjusted && <ChampBadge verified={POKEDEX[s.slots[slot]].champVerified} />}
         <View style={{ flexDirection: 'row', gap: 4, marginLeft: 4 }}>{defTypes.map((ty) => <TypePill key={ty} ty={ty} sm />)}</View>
       </View>
 

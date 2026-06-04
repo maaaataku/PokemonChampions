@@ -13,6 +13,16 @@ export function TypePill({ ty, sm }: { ty: TypeJP; sm?: boolean }) {
   );
 }
 
+/** Champions差分が当たっている技/種族に付く小バッジ。verified=false は暫定値として橙＋「?」。 */
+export function ChampBadge({ verified }: { verified?: boolean }) {
+  const color = verified ? '#9af23a' : '#ff8a3d';
+  return (
+    <View style={{ backgroundColor: color + '26', borderColor: color, borderWidth: 1, borderRadius: 5, paddingHorizontal: 4, paddingVertical: 1 }}>
+      <Text style={{ fontSize: 8.5, fontWeight: '800', color }}>{verified ? 'Ch' : 'Ch?'}</Text>
+    </View>
+  );
+}
+
 export function SegButton({ t, on, label, onPress }: { t: Theme; on: boolean; label: string; onPress: () => void }) {
   return (
     <Pressable onPress={onPress} style={{
