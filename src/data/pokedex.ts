@@ -6,6 +6,7 @@ import { Pokemon, type StatID, type State } from '@smogon/calc';
 import { gen } from '../engine/championsAdapter';
 import { TYPE_EN_TO_JP, type TypeJP } from './types';
 import { SPECIES_ROWS } from './roster';
+import { applySpeciesOverride, getSpeciesOverride } from './champions';
 
 export interface SpeciesDef {
   jp: string;
@@ -16,8 +17,10 @@ export interface SpeciesDef {
   base: Record<StatID, number>;
   /** 技構成（UIプリセット）。 */
   moves: string[];
-  /** Champions 固有の種族データ上書き（必要時のみ）。 */
+  /** Champions 固有の種族データ上書き（計算へ流すエンジン用。差分が無ければ undefined）。 */
   overrides?: State.Pokemon['overrides'];
+  /** Champions差分が適用されているか（UIバッジ用）。 */
+  champAdjusted?: boolean;
 }
 
 function buildSpecies(jp: string, en: string, moves: string[]): SpeciesDef {
@@ -36,10 +39,24 @@ function buildSpecies(jp: string, en: string, moves: string[]): SpeciesDef {
   };
 }
 
-/** キーは日本語種族名（UI表示キー）。エンジンから解決して構築。 */
-export const POKEDEX: Record<string, SpeciesDef> = Object.fromEntries(
-  SPECIES_ROWS.map((r) => [r.jp, buildSpecies(r.jp, r.en, r.moves)]),
-);
+/** ロスターを構築（ベース層＝エンジン解決値 ＋ Champions差分）。 */
+export function buildPokedex(): Record<string, SpeciesDef> {
+  return Object.fromEntries(
+    SPECIES_ROWS.map((r) => {
+      const base = buildSpecies(r.jp, r.en, r.moves);
+      return [r.jp, applySpeciesOverride(base, getSpeciesOverride(r.jp))];
+    }),
+  );
+}
+
+/** キーは日本語種族名（UI表示キー）。 */
+export let POKEDEX: Record<string, SpeciesDef> = buildPokedex();
+
+/** 差分セット差し替え後にロスターを再構築する（配信差分の反映）。 */
+export function rebuildPokedex(): Record<string, SpeciesDef> {
+  POKEDEX = buildPokedex();
+  return POKEDEX;
+}
 
 /** UIの検索用：名前またはタイプ（日本語）で部分一致。 */
 export function searchSpecies(query: string): SpeciesDef[] {

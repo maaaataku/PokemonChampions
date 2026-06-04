@@ -81,10 +81,14 @@ export function calcDamage(p: CalcParams): DamageModel {
     },
   };
 
+  const moveOpts: NonNullable<Parameters<typeof champCalc>[3]>['moveOpts'] = {};
+  if (move?.crit) moveOpts.isCrit = true;
+  if (move?.engineOverride) moveOpts.overrides = move.engineOverride; // Champions技差分を計算へ反映
+
   const result = champCalc(toChampMon(attacker), toChampMon(p.defender), moveEN(p.moveJP), {
     doubles: p.doubles,
     field,
-    moveOpts: move?.crit ? { isCrit: true } : undefined,
+    moveOpts: Object.keys(moveOpts).length ? moveOpts : undefined,
   });
 
   const eff = move

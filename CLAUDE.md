@@ -12,9 +12,10 @@ src/
     stats.ts               Champions実数値（rawStatsと厳密一致をテストで保証）
     result.ts              Result → 確定数モデル(analyze)。range()/kochance()を使用
     service.ts             日本語入力→計算→DamageModel。ダブル補正をField/Sideへマップ
-  data/                   データ層（JP↔EN・差分override枠）
+  data/                   データ層（二層構成: ベース層＝エンジン解決 ＋ Champions差分層）
     roster.ts              ★入力データ: 種族/技の JP↔EN ＋ 技構成 だけを手で定義
-    pokedex.ts moves.ts    roster + エンジンから種族値/タイプ/威力/分類/対象/hits を自動構築
+    champions.ts           ★Champions差分層: パッチ型/空のBUILTIN_PATCH/差し替え/適用関数
+    pokedex.ts moves.ts    roster + エンジン値 ＋ 差分 を重ねて構築（rebuildで配信差し替え対応）
     types/natures/items/typechart  + index(バレル & toChampMon)
   ui/
     theme.ts components.tsx calcModel.ts   盤面状態モデル＆状態→計算
@@ -36,8 +37,12 @@ App.tsx                                     盤面状態とテーマを保持し
 - **ロスター/技の追加は `roster.ts` に1行足すだけ**（JP↔EN＋技構成）。種族値・タイプ・威力・
   分類・対象・ヒット数はエンジンが解決し、`pokedex.ts`/`moves.ts` がモジュール読込時に構築する。
   無効なEN名は構築時に例外を投げる（`roster.test.ts` が全件の解決と実計算を検証）。
-- Champions固有差分（技威力調整・内定ロスター・メガ・ゼンブイリング等）は
-  `overrides`（種族）/ `moveOpts.overrides`（技）の枠で上書きする想定（差分層は今後整備）。
+- **Champions差分は `data/champions.ts` の `ChampionsPatch` に集約**。差分は「表示値(MoveDef.power
+  /SpeciesDef.base)」と「計算値(エンジンへ渡す overrides / moveOpts.overrides)」の両方へ適用する
+  （片方だけだと確定数がズレる）。技override は `basePower`、種族は `baseStats/types`（エンジン実測済）。
+  - 本体同梱 `BUILTIN_PATCH` は**空**。実値は実機照合で確定し次第ここに追記（誤値を出荷しない）。
+  - 配信(N-6): `setActivePatch(patch)` → `rebuildMoves()/rebuildPokedex()` で差し替え。起動時に
+    ローカル同梱→リモート差分の順で適用する想定。各エントリは `verified`（実機照合済みか）を持つ。
 
 ## コマンド
 

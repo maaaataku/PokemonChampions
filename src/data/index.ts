@@ -53,3 +53,4 @@ export function toChampMon(input: MonInput): ChampMon {
 }
 export * from './items';
 export * from './typechart';
+export * from './champions';
