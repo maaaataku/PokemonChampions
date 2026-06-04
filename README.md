@@ -74,8 +74,17 @@ App.tsx      盤面状態とテーマを保持し、計算/相性タブを切替
 - 本体同梱 `BUILTIN_PATCH` は**空**（既定では何も変えない）。実値は**実機照合**で確定し次第追記する
   （誤った差分を「正」として出荷しない）。各エントリは `verified`（実機照合済みか）を持つ。
 - 配信差し替え: `setActivePatch(patch)` → `rebuildMoves()` / `rebuildPokedex()`。
-  起動時にローカル同梱→リモート差分の順で適用する想定。
 - UIでは差分が当たった技/種族に `Ch`（照合済み・緑）/ `Ch?`（暫定・橙）バッジが付く。
+
+### 差分配信（サーバレス, N-6）
+
+`src/data/remotePatch.ts`（純粋・検証/サニタイズ）＋ `patchSync.ts`（実 fetch/AsyncStorage/rebuild の配線）。
+起動時に **キャッシュ→リモート** の順で適用し、失敗時は同梱パッチにフォールバックする。
+
+- 有効化: `patchSync.ts` の `PATCH_URL` に**静的JSONのURL**（CDN / GitHub Pages / Cloudflare Pages 等）を設定するだけ。サーバDBは不要。
+- 配信ファイルの形式は [`docs/patch.example.json`](docs/patch.example.json) を参照（`ChampionsPatch` と同型）。
+- リモートは untrusted 前提で **`validatePatch` が検証＆サニタイズ**（不正な型・タイプ名・実効ゼロのエントリは除外）。
+- `PATCH_URL` が空の間はリモート取得をスキップし、キャッシュ／同梱のみで動作（既定）。
 
 ## 共有コードの仕様
 

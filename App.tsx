@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import DoublesScreen from './src/screens/DoublesScreen';
 import MatchupScreen from './src/screens/MatchupScreen';
 import PresetManager from './src/screens/PresetManager';
 import ErrorBoundary from './src/ui/ErrorBoundary';
+import { syncChampionsPatch } from './src/data/patchSync';
 
 type Tab = 'calc' | 'matchup';
 
@@ -29,6 +30,15 @@ function AppInner() {
   const [board, setBoard] = useState<BoardState>(initialBoard);
   const [tab, setTab] = useState<Tab>('calc');
   const [manageOpen, setManageOpen] = useState(false);
+  // 差分配信(N-6): 起動時にキャッシュ→リモートの順で適用し、適用後に再描画を促す。
+  const [, setPatchVersion] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    syncChampionsPatch()
+      .then((res) => { if (alive && res.applied !== 'builtin') setPatchVersion((v) => v + 1); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
 
   return (
     <SafeAreaProvider>

@@ -4,7 +4,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createPresetStore, type StorageAdapter } from './presets';
 
-const asyncStorageAdapter: StorageAdapter = {
+/** AsyncStorage を StorageAdapter に適合させた実装（差分キャッシュ等でも共用）。 */
+export const asyncStorageAdapter: StorageAdapter = {
   getItem: (key) => AsyncStorage.getItem(key),
   setItem: (key, value) => AsyncStorage.setItem(key, value),
 };

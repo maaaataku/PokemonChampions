@@ -1,0 +1,10 @@
+{
+  "version": "2026.06-A",
+  "updatedAt": "2026-06-05",
+  "moves": {
+    "じしん": { "basePower": 100, "verified": false, "note": "例: Champions調整値（実機照合後に verified:true）" }
+  },
+  "species": {
+    "カバルドン": { "baseStats": { "def": 118 }, "verified": false, "note": "例: 種族値差分（必要時のみ）" }
+  }
+}

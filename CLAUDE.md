@@ -47,8 +47,10 @@ App.tsx                                     盤面状態とテーマを保持し
   /SpeciesDef.base)」と「計算値(エンジンへ渡す overrides / moveOpts.overrides)」の両方へ適用する
   （片方だけだと確定数がズレる）。技override は `basePower`、種族は `baseStats/types`（エンジン実測済）。
   - 本体同梱 `BUILTIN_PATCH` は**空**。実値は実機照合で確定し次第ここに追記（誤値を出荷しない）。
-  - 配信(N-6): `setActivePatch(patch)` → `rebuildMoves()/rebuildPokedex()` で差し替え。起動時に
-    ローカル同梱→リモート差分の順で適用する想定。各エントリは `verified`（実機照合済みか）を持つ。
+  - 配信(N-6): `setActivePatch(patch)` → `rebuildMoves()/rebuildPokedex()` で差し替え。各エントリは
+    `verified`（実機照合済みか）を持つ。**取得層は `data/remotePatch.ts`（検証/サニタイズ・依存注入で純粋）
+    ＋ `patchSync.ts`（実fetch/AsyncStorage/rebuild配線）。起動時に App が キャッシュ→リモート の順で
+    適用し再描画。失敗時は同梱にフォールバック。`PATCH_URL` に静的JSONのURLを入れれば有効化（サーバDB不要）。**
 
 ## コマンド
 
