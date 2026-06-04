@@ -16,8 +16,10 @@ import {
   ATK_ITEM_LABELS, DEF_ITEM_LABELS, type AtkItemKey, type TypeJP,
 } from '../data';
 import { KO_COLORS } from '../engine/result';
+import { findSurvival, type SurvivalResult } from '../engine/tuning';
 import {
   initialBoard, computeResults, computeCombo, targetSlots, allyOther,
+  attackParamsFor, speedRows,
   type BoardState, type SlotId, type AllyId, type FoeId, type Mult,
 } from '../ui/calcModel';
 
@@ -36,6 +38,7 @@ export default function DoublesScreen() {
   const [sheet, setSheet] = useState<SlotId | null>(null);
   const [q, setQ] = useState('');
   const [detail, setDetail] = useState<'atk' | 'def' | null>(null);
+  const [survival, setSurvival] = useState<{ slot: SlotId; result: SurvivalResult } | null>(null);
 
   const move = MOVES[s.moveKey];
   const isPhys = move?.cat === 'phys';
@@ -58,6 +61,8 @@ export default function DoublesScreen() {
     setS((prev) => ({ ...prev, tera: { ...prev.tera, [slot]: { ...prev.tera[slot], ...p } } }));
   const setCombo = (ally: AllyId, mv: string) =>
     setS((prev) => ({ ...prev, comboMv: { ...prev.comboMv, [ally]: mv } }));
+  const setSpe = <K extends keyof BoardState['speProfs'][SlotId]>(slot: SlotId, k: K, v: BoardState['speProfs'][SlotId][K]) =>
+    setS((prev) => ({ ...prev, speProfs: { ...prev.speProfs, [slot]: { ...prev.speProfs[slot], [k]: v } } }));
 
   const pickMon = (jp: string) => {
     if (!sheet) return;
@@ -271,6 +276,23 @@ export default function DoublesScreen() {
             <NatureRow t={t} value={focusDef.nature} onChange={(v) => setDef(primarySlot, 'nature', v as Mult)} />
             <ChoiceRow<'none' | 'vest'> t={t} label="もちもの" value={focusDef.vest ? 'vest' : 'none'} opts={DEF_ITEM_LABELS} onChange={(v) => setDef(primarySlot, 'vest', v === 'vest')} />
           </Expander>
+
+          {/* 確定耐え調整（F-12 / F-14） */}
+          <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: t.border }}>
+            <Pressable
+              onPress={() => setSurvival({ slot: primarySlot, result: findSurvival(attackParamsFor(s, primarySlot)) })}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 }}>
+              <Ionicons name="shield-checkmark" size={14} color={t.accent} />
+              <Text style={{ fontSize: 12, fontWeight: '800', color: t.hi }}>{atkMon.jp}の{move?.jp}を確定耐えする投資</Text>
+            </Pressable>
+            {survival && survival.slot === primarySlot && (
+              <SurvivalPanel t={t}
+                result={survival.result}
+                isPhys={isPhys}
+                onApplyHP={(p) => { setDef(primarySlot, 'hpSP', p); setSurvival(null); }}
+                onApplyDef={(p) => { setDef(primarySlot, 'defSP', p); setSurvival(null); }} />
+            )}
+          </View>
         </Panel>
 
         {/* フィールド */}
@@ -282,6 +304,48 @@ export default function DoublesScreen() {
           <ChoiceRow t={t} label="フィールド" value={s.terrain ?? 'none'}
             opts={[['none', 'なし'], ['electric', 'エレキ'], ['grassy', 'グラス'], ['psychic', 'サイコ'], ['misty', 'ミスト']]}
             onChange={(v) => patch({ terrain: v === 'none' ? null : (v as 'electric' | 'grassy' | 'psychic' | 'misty') })} />
+        </Panel>
+
+        {/* 素早さ早見（F-13） */}
+        <Panel t={t} style={{ marginTop: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 8, flexWrap: 'wrap' }}>
+            <Ionicons name="speedometer" size={15} color={t.accent} />
+            <Text style={{ fontWeight: '800', fontSize: 13, color: t.hi }}>素早さ早見</Text>
+            <View style={{ flexDirection: 'row', gap: 5, marginLeft: 'auto', flexWrap: 'wrap' }}>
+              <ToggleChip t={t} label="味方追い風" on={s.allyTailwind} onPress={() => patch({ allyTailwind: !s.allyTailwind })} />
+              <ToggleChip t={t} label="相手追い風" on={s.foeTailwind} onPress={() => patch({ foeTailwind: !s.foeTailwind })} />
+              <ToggleChip t={t} label="トリル" on={s.trickRoom} onPress={() => patch({ trickRoom: !s.trickRoom })} />
+            </View>
+          </View>
+          {speedRows(s).map((row) => {
+            const prof = s.speProfs[row.slot];
+            return (
+              <View key={row.slot} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: t.border }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: t.lo, width: 20 }}>{row.rank}.</Text>
+                  <Text style={{ fontSize: 13.5, fontWeight: '800', color: row.isAlly ? t.accent : t.foe }}>{row.name}</Text>
+                  <Text style={{ marginLeft: 'auto', fontSize: 20, fontWeight: '800', color: t.hi }}>{row.speed}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 7, flexWrap: 'wrap' }}>
+                  <View style={{ flexDirection: 'row', gap: 4 }}>
+                    {([[0.9, '↓'], [1.0, '無'], [1.1, '↑']] as [Mult, string][]).map(([v, l]) => (
+                      <SegButton key={v} t={t} on={prof.nature === v} label={l} onPress={() => setSpe(row.slot, 'nature', v)} />
+                    ))}
+                  </View>
+                  <ToggleChip t={t} label="スカーフ" on={prof.scarf} onPress={() => setSpe(row.slot, 'scarf', !prof.scarf)} />
+                  <ToggleChip t={t} label="まひ" on={prof.para} onPress={() => setSpe(row.slot, 'para', !prof.para)} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+                    <Text style={{ fontSize: 11, color: t.mid, fontWeight: '600' }}>素早さP</Text>
+                    <Pressable onPress={() => setSpe(row.slot, 'pts', Math.max(0, prof.pts - 4))} style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="remove" size={14} color={t.hi} /></Pressable>
+                    <Text style={{ minWidth: 24, textAlign: 'center', fontWeight: '800', fontSize: 14, color: t.hi }}>{prof.pts}</Text>
+                    <Pressable onPress={() => setSpe(row.slot, 'pts', Math.min(32, prof.pts + 4))} style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, alignItems: 'center', justifyContent: 'center' }}>
+                      <Ionicons name="add" size={14} color={t.hi} /></Pressable>
+                  </View>
+                </View>
+              </View>
+            );
+          })}
         </Panel>
 
         <Text style={{ textAlign: 'center', color: t.lo, fontSize: 10, marginTop: 18, paddingHorizontal: 24 }}>
@@ -329,6 +393,33 @@ function Panel({ t, style, children }: { t: typeof THEMES.dark; style?: object; 
   return (
     <View style={[{ marginHorizontal: 16, padding: 12, borderRadius: 18, backgroundColor: t.panel, borderWidth: 1, borderColor: t.border }, style]}>
       {children}
+    </View>
+  );
+}
+
+function SurvivalPanel({ t, result, isPhys, onApplyHP, onApplyDef }: {
+  t: typeof THEMES.dark; result: SurvivalResult; isPhys: boolean;
+  onApplyHP: (pts: number) => void; onApplyDef: (pts: number) => void;
+}) {
+  const defLabel = isPhys ? 'ぼうぎょ' : 'とくぼう';
+  const Line = ({ label, line, onApply }: { label: string; line: NonNullable<SurvivalResult['byHP']>; onApply: () => void }) => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8 }}>
+      <Text style={{ fontSize: 12.5, color: t.hi, fontWeight: '700' }}>{label} <Text style={{ color: t.accent, fontWeight: '800' }}>P{line.pts}</Text></Text>
+      <Text style={{ fontSize: 11, color: t.mid }}>残{line.survivePct.toFixed(0)}%（{line.max}/{line.maxHP}）</Text>
+      <Pressable onPress={onApply} style={{ marginLeft: 'auto', backgroundColor: t.accent, borderRadius: 9, paddingHorizontal: 12, paddingVertical: 6 }}>
+        <Text style={{ fontSize: 11.5, fontWeight: '800', color: t.onAccent }}>反映</Text>
+      </Pressable>
+    </View>
+  );
+  return (
+    <View style={{ marginTop: 10, backgroundColor: t.panel2, borderRadius: 12, borderWidth: 1, borderColor: t.border, padding: 12 }}>
+      {result.currentlySurvives
+        ? <Text style={{ fontSize: 11.5, color: t.mid }}>現状の振りで既に確定耐え。最小投資の目安：</Text>
+        : <Text style={{ fontSize: 11.5, color: t.foe, fontWeight: '700' }}>現状は確定耐えできていない。必要投資：</Text>}
+      {result.byHP ? <Line label="HP" line={result.byHP} onApply={() => onApplyHP(result.byHP!.pts)} />
+        : <Text style={{ fontSize: 11.5, color: t.lo, marginTop: 8 }}>HP最大振りでも確定耐え不可</Text>}
+      {result.byDef ? <Line label={defLabel} line={result.byDef} onApply={() => onApplyDef(result.byDef!.pts)} />
+        : <Text style={{ fontSize: 11.5, color: t.lo, marginTop: 8 }}>{defLabel}最大振りでも確定耐え不可</Text>}
     </View>
   );
 }

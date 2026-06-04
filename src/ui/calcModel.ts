@@ -13,6 +13,7 @@ import {
 } from '../data';
 import { calcDamage, type CalcParams, type WeatherKey, type TerrainKey } from '../engine/service';
 import type { DamageModel } from '../engine/result';
+import { championsSpeed, orderBySpeed } from '../engine/tuning';
 
 export type SlotId = 'foeL' | 'foeR' | 'allyA' | 'allyB';
 export type AllyId = 'allyA' | 'allyB';
@@ -41,6 +42,15 @@ export interface TeraState {
   type: TypeJP;
 }
 
+/** 素早さ早見用の各スロットのプロフィール。 */
+export interface SpeProfile {
+  pts: number;
+  nature: Mult;
+  stage: number;
+  scarf: boolean;
+  para: boolean;
+}
+
 export interface BoardState {
   slots: Record<SlotId, string>;
   activeAtk: AllyId;
@@ -52,6 +62,10 @@ export interface BoardState {
   weather: WeatherKey;
   terrain: TerrainKey;
   comboMv: Record<AllyId, string>; // 日本語技名 or 'none'
+  speProfs: Record<SlotId, SpeProfile>;
+  allyTailwind: boolean;
+  foeTailwind: boolean;
+  trickRoom: boolean;
 }
 
 export const allyOther = (a: AllyId): AllyId => (a === 'allyA' ? 'allyB' : 'allyA');
@@ -63,6 +77,7 @@ export function initialBoard(): BoardState {
     hpSP, defSP, nature: 1.0, vest: false, fg: false, screen: false, stage: 0,
   });
   const tera = (type: TypeJP): TeraState => ({ on: false, type });
+  const spe = (): SpeProfile => ({ pts: 0, nature: 1.0, stage: 0, scarf: false, para: false });
   return {
     slots: { foeL: 'カバルドン', foeR: 'モロバレル', allyA: 'ガブリアス', allyB: 'イーユイ' },
     activeAtk: 'allyA',
@@ -74,6 +89,10 @@ export function initialBoard(): BoardState {
     weather: null,
     terrain: null,
     comboMv: { allyA: 'じしん', allyB: 'ねっぷう' },
+    speProfs: { foeL: spe(), foeR: spe(), allyA: spe(), allyB: spe() },
+    allyTailwind: false,
+    foeTailwind: false,
+    trickRoom: false,
   };
 }
 
@@ -115,6 +134,11 @@ export function defInput(s: BoardState, slot: SlotId, isPhys: boolean): MonInput
     teraJP: tera.on ? tera.type : null,
     boosts: prof.stage ? { [stat]: prof.stage } : undefined,
   };
+}
+
+/** アクティブ攻撃役が指定スロットを攻撃する CalcParams（耐久逆算 F-12 の入力に使う）。 */
+export function attackParamsFor(s: BoardState, slot: SlotId): CalcParams {
+  return paramsFor(s, s.activeAtk, s.moveKey, slot);
 }
 
 function paramsFor(s: BoardState, ally: AllyId, moveJP: string, slot: SlotId): CalcParams {
@@ -194,4 +218,45 @@ export function computeCombo(s: BoardState): ComboResult {
 function defenderHP(s: BoardState): number {
   const dm = calcDamage(paramsFor(s, s.activeAtk, s.moveKey, s.focusFoe));
   return dm.maxHP;
+}
+
+/* ----------------------------- 素早さ早見（F-13） ----------------------------- */
+
+export interface SpeedRow {
+  slot: SlotId;
+  name: string;
+  isAlly: boolean;
+  speed: number;
+  /** 行動順（1始まり。トリル考慮）。同速は同順位。 */
+  rank: number;
+}
+
+const SLOT_ORDER: SlotId[] = ['foeL', 'foeR', 'allyA', 'allyB'];
+
+/** 全スロットの素早さ実数値（補正込み）と行動順を算出。 */
+export function speedRows(s: BoardState): SpeedRow[] {
+  const base = SLOT_ORDER.map((slot) => {
+    const prof = s.speProfs[slot];
+    const isAlly = slot === 'allyA' || slot === 'allyB';
+    const speBase = POKEDEX[s.slots[slot]]?.base.spe ?? 0;
+    const speed = championsSpeed(speBase, prof.pts, prof.nature, prof.stage, {
+      scarf: prof.scarf,
+      paralysis: prof.para,
+      tailwind: isAlly ? s.allyTailwind : s.foeTailwind,
+    });
+    return { slot, name: POKEDEX[s.slots[slot]]?.jp ?? s.slots[slot], isAlly, speed };
+  });
+
+  const ordered = orderBySpeed(base.map((b) => ({ id: b.slot, speed: b.speed })), s.trickRoom);
+  // 同速は同順位（標準的な順位付け）。
+  const rankOf = new Map<SlotId, number>();
+  ordered.forEach((e, i) => {
+    const prev = i > 0 ? ordered[i - 1] : null;
+    const rank = prev && prev.speed === e.speed ? rankOf.get(prev.id)! : i + 1;
+    rankOf.set(e.id, rank);
+  });
+
+  return base
+    .map((b) => ({ ...b, rank: rankOf.get(b.slot)! }))
+    .sort((a, b) => a.rank - b.rank);
 }

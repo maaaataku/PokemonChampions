@@ -1,6 +1,6 @@
 // calcModel.test.ts — 盤面の対象決定・範囲・味方巻き込み・合算KO ロジックの回帰テスト。
 import {
-  initialBoard, targetSlots, computeResults, computeCombo, type BoardState,
+  initialBoard, targetSlots, computeResults, computeCombo, speedRows, type BoardState,
 } from '../calcModel';
 
 function board(over: Partial<BoardState> = {}): BoardState {
@@ -46,5 +46,22 @@ describe('computeCombo（合算KO）', () => {
     const c = computeCombo(s);
     expect(c.parts.length).toBe(0);
     expect(c.verdict).toBe('none');
+  });
+});
+
+describe('speedRows（素早さ早見・F-13）', () => {
+  it('無振りデフォルト盤面は種族値順（ガブ>イーユイ>カバルドン>モロバレル）', () => {
+    const rows = speedRows(board());
+    expect(rows.map((r) => r.slot)).toEqual(['allyA', 'allyB', 'foeL', 'foeR']);
+    expect(rows.map((r) => r.rank)).toEqual([1, 2, 3, 4]);
+  });
+  it('トリックルームで行動順が反転', () => {
+    const rows = speedRows(board({ trickRoom: true }));
+    expect(rows.map((r) => r.slot)).toEqual(['foeR', 'foeL', 'allyB', 'allyA']);
+  });
+  it('味方おいかぜで味方の素早さが2倍になり順位が上がる', () => {
+    const base = speedRows(board()).find((r) => r.slot === 'allyB')!;
+    const tw = speedRows(board({ allyTailwind: true })).find((r) => r.slot === 'allyB')!;
+    expect(tw.speed).toBe(base.speed * 2);
   });
 });

@@ -37,6 +37,11 @@ export function natureMultFor(
   return 1.0;
 }
 
+/** ランク補正倍率（+nは(2+n)/2、-nは2/(2-n)）。素早さ早見など自前計算で使用。 */
+export function stageMult(stage: number): number {
+  return stage >= 0 ? (2 + stage) / 2 : 2 / (2 - stage);
+}
+
 /** 1能力分の能力ポイント上限（合計上限は66、本実装では各能力で別管理）。 */
 export const MAX_PTS_PER_STAT = 32;
 export const MAX_PTS_TOTAL = 66;
