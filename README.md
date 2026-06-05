@@ -94,6 +94,28 @@ App.tsx      盤面状態とテーマを保持し、計算/相性タブを切替
 - デコードは検証付き。形式違い・破損・バージョン不一致・現行ロスターに無いポケモンを含むコードは
   `null` を返し、UI はエラー表示（クラッシュさせない）。
 
+## ストア配布（EAS）
+
+ビルド/申請は **EAS（Expo Application Services）** を使う。設定は [`eas.json`](eas.json)。
+
+```bash
+npm i -g eas-cli          # 初回のみ
+eas login                  # Expo アカウント
+eas init                   # app.json に projectId/owner を生成
+eas build --profile preview --platform ios       # 内部テスト用（シミュレータ可）
+eas build --profile production --platform all     # 本番ビルド（要 Apple/Google アカウント）
+eas submit --profile production --platform ios     # App Store Connect へ提出
+eas submit --profile production --platform android # Google Play へ提出
+```
+
+- バージョン: `eas.json` の `appVersionSource: remote` ＋ production の `autoIncrement` により
+  ビルド番号は EAS が自動採番。表示バージョンは `app.json` の `version`。
+- `eas.json` の `submit.production` は **プレースホルダ**（Apple ID / ascAppId / appleTeamId /
+  Google サービスアカウント鍵）を実値に差し替える。
+- 公開前チェック: [`docs/store-listing.md`](docs/store-listing.md)（掲載文・スクショ）、
+  [`docs/privacy-policy.md`](docs/privacy-policy.md)（要 URL 公開）、`npx expo-doctor`（健全性）。
+- **非公式ファンツールである旨**をストア説明・アプリ内で明記すること。
+
 ## テスト方針
 
 `src/**/__tests__/*.test.ts` に純粋ロジックのユニットテストを置く（RNコンポーネントは対象外）。
