@@ -13,7 +13,6 @@ import { TYPE_EN_TO_JP, TYPE_JP_TO_EN, type TypeJP } from './types';
 import type {
   BoardState, AtkProfile, DefProfile, SpeProfile, TeraState, Mult, SlotId,
 } from '../ui/calcModel';
-import { initialBoard } from '../ui/calcModel';
 
 export type StatKey = 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe';
 
@@ -305,6 +304,3 @@ function allyToSet(board: BoardState, slot: 'allyA' | 'allyB'): string {
 export function boardAlliesToShowdown(board: BoardState): string {
   return [allyToSet(board, 'allyA'), allyToSet(board, 'allyB')].join('\n\n');
 }
-
-/** デモ/テスト用の既定盤面からの書き出し（初期盤面）。 */
-export const exampleShowdown = (): string => boardAlliesToShowdown(initialBoard());
