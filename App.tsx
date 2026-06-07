@@ -9,6 +9,7 @@ import { initialBoard, type BoardState } from './src/ui/calcModel';
 import DoublesScreen from './src/screens/DoublesScreen';
 import MatchupScreen from './src/screens/MatchupScreen';
 import PresetManager from './src/screens/PresetManager';
+import AboutScreen from './src/screens/AboutScreen';
 import ErrorBoundary from './src/ui/ErrorBoundary';
 import { syncChampionsPatch } from './src/data/patchSync';
 
@@ -30,6 +31,7 @@ function AppInner() {
   const [board, setBoard] = useState<BoardState>(initialBoard);
   const [tab, setTab] = useState<Tab>('calc');
   const [manageOpen, setManageOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   // 差分配信(N-6): 起動時にキャッシュ→リモートの順で適用し、適用後に再描画を促す。
   const [, setPatchVersion] = useState(0);
   useEffect(() => {
@@ -57,6 +59,10 @@ function AppInner() {
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Pressable onPress={() => setAboutOpen(true)}
+              style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 10, padding: 8 }}>
+              <Ionicons name="information-circle-outline" size={17} color={t.hi} />
+            </Pressable>
             <Pressable onPress={() => setManageOpen(true)}
               style={{ backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 10, padding: 8 }}>
               <Ionicons name="albums" size={17} color={t.hi} />
@@ -92,6 +98,7 @@ function AppInner() {
 
         <PresetManager t={t} visible={manageOpen} board={board}
           onLoad={(b) => setBoard(b)} onClose={() => setManageOpen(false)} />
+        <AboutScreen t={t} visible={aboutOpen} onClose={() => setAboutOpen(false)} />
       </SafeAreaView>
     </SafeAreaProvider>
   );
