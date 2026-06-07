@@ -1,5 +1,5 @@
 {
-  "name": "pokemonchampions",
+  "name": "double-damage-calc",
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
@@ -7,8 +7,8 @@
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@smogon/calc": "^0.11.0",
-    "expo": "~56.0.8",
-    "expo-clipboard": "~56.0.3",
+    "expo": "~56.0.9",
+    "expo-clipboard": "~56.0.4",
     "expo-font": "~56.0.5",
     "expo-status-bar": "~56.0.4",
     "react": "19.2.3",
@@ -34,7 +34,10 @@
   },
   "expo": {
     "install": {
-      "exclude": ["jest", "@types/jest"]
+      "exclude": [
+        "jest",
+        "@types/jest"
+      ]
     }
   },
   "private": true

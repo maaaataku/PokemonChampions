@@ -189,7 +189,7 @@ export default function PresetManager({ t, visible, board, onLoad, onClose }: Pr
               </Pressable>
               {sdMsg && <Text style={{ flex: 1, fontSize: 10, color: sdMsg.ok ? t.mid : t.foe }} numberOfLines={2}>{sdMsg.text}</Text>}
             </View>
-            <Text style={{ fontSize: 9, color: t.lo, marginTop: 5 }}>※ 能力値はChampionsの能力P制に近似（EV→P換算）。技構成はロスター定義を使用。</Text>
+            <Text style={{ fontSize: 9, color: t.lo, marginTop: 5 }}>※ 能力値は能力ポイント制（Lv50/IV31固定）に近似（EV→P換算）。技構成はロスター定義を使用。</Text>
           </View>
 
           {/* 共有コード表示 */}

@@ -53,7 +53,7 @@ function AppInner() {
               <Ionicons name="flash" size={16} color={t.bg} />
             </View>
             <Text style={{ fontWeight: '900', fontSize: 15, color: t.hi }}>
-              ダメ計 <Text style={{ color: t.lo, fontWeight: '700', fontSize: 11 }}>Champions · ダブル</Text>
+              ダブル特化ダメ計
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

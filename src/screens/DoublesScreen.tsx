@@ -410,7 +410,7 @@ export default function DoublesScreen({ t, s, setS }: DoublesScreenProps) {
 
         <Text style={{ textAlign: 'center', color: t.lo, fontSize: 10, marginTop: 18, paddingHorizontal: 24 }}>
           実エンジン(@smogon/calc)接続 · Lv50/IV31固定/能力ポイント制 · 範囲・合算KO・ダブル補正適用{'\n'}
-          Ch = Champions調整値（Ch? は実機未照合の暫定値）
+          Ch = ゲーム固有の調整値（Ch? は実機未照合の暫定値）
         </Text>
       </ScrollView>
 

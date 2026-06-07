@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "PokemonChampions",
-    "slug": "PokemonChampions",
+    "name": "ダブル特化ダメ計",
+    "slug": "double-damage-calc",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.maaaataku.pokemonchampions"
+      "bundleIdentifier": "com.maaaataku.doublecalc"
     },
     "android": {
-      "package": "com.maaaataku.pokemonchampions",
+      "package": "com.maaaataku.doublecalc",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
