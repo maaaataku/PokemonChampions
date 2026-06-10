@@ -4,7 +4,7 @@ import { View, Text, Pressable, ScrollView, Modal, Linking } from 'react-native'
 import { Ionicons } from '@expo/vector-icons';
 
 import type { Theme } from '../ui/theme';
-import { APP_VERSION, SPONSORS_URL, SMOGON_CALC_URL, PRIVACY_URL } from '../constants';
+import { APP_VERSION, SMOGON_CALC_URL, PRIVACY_URL } from '../constants';
 
 export interface AboutScreenProps {
   t: Theme;
@@ -53,18 +53,9 @@ export default function AboutScreen({ t, visible, onClose }: AboutScreenProps) {
               </Body>
             </Section>
 
-            {/* 開発を応援 */}
-            <Section t={t} title="開発を応援">
-              {SPONSORS_URL ? (
-                <Pressable onPress={() => open(SPONSORS_URL)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.accent, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, alignSelf: 'flex-start' }}>
-                  <Ionicons name="heart" size={16} color={t.onAccent} />
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: t.onAccent }}>GitHub Sponsors で支援</Text>
-                </Pressable>
-              ) : (
-                <Body t={t}>支援リンクは準備中です。</Body>
-              )}
-              {/* アプリ内チップ（実機版で対応予定） */}
+            {/* 開発を応援（アプリ内チップ = IAP のみ。外部寄付リンクは規約配慮で置かない） */}
+            <Section t={t} title="開発を応援（チップ）">
+              <Body t={t}>気に入っていただけたら、チップで開発を応援いただけます。</Body>
               <View style={{ marginTop: 10, backgroundColor: t.panel2, borderWidth: 1, borderColor: t.border, borderRadius: 12, padding: 12 }}>
                 <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                   {['¥120', '¥320', '¥640'].map((label) => (
@@ -73,7 +64,7 @@ export default function AboutScreen({ t, visible, onClose }: AboutScreenProps) {
                     </View>
                   ))}
                 </View>
-                <Text style={{ fontSize: 10, color: t.lo, marginTop: 6 }}>アプリ内チップ（投げ銭）は実機版で対応予定です。</Text>
+                <Text style={{ fontSize: 10, color: t.lo, marginTop: 6 }}>アプリ内チップ（投げ銭）は実機版で有効化します。</Text>
               </View>
             </Section>
 

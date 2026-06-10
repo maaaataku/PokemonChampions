@@ -3,7 +3,10 @@
 /** 表示バージョン（app.json の version と手動同期）。 */
 export const APP_VERSION = '1.0.0';
 
-/** 開発支援（GitHub Sponsors）。未開設の間はプレースホルダ。空にするとUIで非表示。 */
+/**
+ * 開発支援（GitHub Sponsors）。**アプリ内には置かない**（課金規約配慮）。
+ * ストア説明文・ウェブ/GitHub 側の導線でのみ使用する。未開設の間はプレースホルダ。
+ */
 export const SPONSORS_URL = 'https://github.com/sponsors/maaaataku';
 
 /** 計算エンジンの出典（MIT）。 */
