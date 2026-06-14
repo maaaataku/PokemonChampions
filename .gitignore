@@ -39,6 +39,11 @@ yarn-error.*
 # Claude Code local settings (personal)
 .claude/settings.local.json
 
+# Store credentials (never commit)
+google-play-service-account.json
+*-service-account.json
+AuthKey_*.p8
+
 # generated native folders
 /ios
 /android
