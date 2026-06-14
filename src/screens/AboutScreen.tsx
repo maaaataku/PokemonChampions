@@ -10,13 +10,15 @@ export interface AboutScreenProps {
   t: Theme;
   visible: boolean;
   onClose: () => void;
+  /** 実数値チェック（照合用）を開く。 */
+  onOpenStats: () => void;
 }
 
 function open(url: string) {
   if (url) Linking.openURL(url).catch(() => {});
 }
 
-export default function AboutScreen({ t, visible, onClose }: AboutScreenProps) {
+export default function AboutScreen({ t, visible, onClose, onOpenStats }: AboutScreenProps) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: '#000a', justifyContent: 'flex-end' }} onPress={onClose}>
@@ -66,6 +68,15 @@ export default function AboutScreen({ t, visible, onClose }: AboutScreenProps) {
                 </View>
                 <Text style={{ fontSize: 10, color: t.lo, marginTop: 6 }}>アプリ内チップ（投げ銭）は実機版で有効化します。</Text>
               </View>
+            </Section>
+
+            {/* 開発者向け：実数値チェック */}
+            <Section t={t} title="照合ツール">
+              <Pressable onPress={() => { onClose(); onOpenStats(); }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.chip, borderWidth: 1, borderColor: t.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 11, alignSelf: 'flex-start' }}>
+                <Ionicons name="stats-chart" size={16} color={t.accent} />
+                <Text style={{ fontSize: 13, fontWeight: '800', color: t.hi }}>実数値チェック（実機照合用）</Text>
+              </Pressable>
             </Section>
 
             {/* クレジット */}
