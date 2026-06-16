@@ -94,6 +94,20 @@ App.tsx      盤面状態とテーマを保持し、計算/相性タブを切替
 - デコードは検証付き。形式違い・破損・バージョン不一致・現行ロスターに無いポケモンを含むコードは
   `null` を返し、UI はエラー表示（クラッシュさせない）。
 
+## Web版（スマホブラウザで開く / GitHub Pages）
+
+公開URL: **https://maaaataku.github.io/PokemonChampions/**（インストール不要・スマホ可）
+
+更新デプロイ手順:
+```bash
+npx expo export --platform web          # dist/ を生成（app.json の experiments.baseUrl=/PokemonChampions）
+cd dist && touch .nojekyll              # _expo/ を配信させる（Jekyll回避）
+git init -q && git checkout -q -b gh-pages && git add -A \
+  && git -c user.email=maaaataku@users.noreply.github.com -c user.name=maaaataku commit -q -m "deploy web" \
+  && git push -f https://github.com/maaaataku/PokemonChampions.git gh-pages
+```
+> ローカル保存（プリセット等）は端末のブラウザ localStorage に保存される。
+
 ## ストア配布（EAS）
 
 ビルド/申請は **EAS（Expo Application Services）** を使う。設定は [`eas.json`](eas.json)。
